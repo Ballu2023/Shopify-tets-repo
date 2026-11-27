@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot Office</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE playful but work-ready: a night shift office where every bot team has its own cabin
+   IDEA an office floor plan seen from above-front; cabins are glass rooms, bots sit at desks
+   PICTURE the floor itself: animated bots typing, tickets flying between cabins
+   COLOUR night navy floor, glass cabins, team colours: blue frontend, amber UAT, red QA, green fix, violet backend, orange manager
+   TYPE Figtree 800 + Figtree
+   LAYOUT top bar with progress; floor grid of cabins; pipeline strip; activity feed. Phone: cabins stack */
+:root{--bg:#0b1020;--floor:#10172b;--glass:#151f3a;--edge:#26345c;--ink:#eef2ff;--mut:#97a3c7;--fe:#3d7bff;--uat:#ffb400;--qa:#ff4d5e;--fix:#19c37d;--be:#b47cff;--dr:#9aa4b8;--mgr:#ff8a3d;--done:#19c37d}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 Figtree,system-ui,sans-serif;overflow-x:hidden}
+.wrap{max-width:1500px;margin:0 auto;padding:18px max(2vw,14px) 40px}
+.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between}
+.ttl{display:flex;gap:16px;align-items:center}
+h1{font-weight:800;font-size:clamp(26px,3.4vw,38px);line-height:1.05;letter-spacing:-.02em;margin:0}
+.sub{color:var(--mut);margin:4px 0 0;font-size:14px}
+.ring{width:64px;height:64px;flex:none}
+.kpis{display:flex;flex-wrap:wrap;gap:8px}
+.kpi{background:var(--glass);border:1px solid var(--edge);border-radius:12px;padding:8px 14px;min-width:96px}
+.kpi b{display:block;font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mut)}
+.links{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--mut)}
+.links a{color:var(--ink);border:1px solid var(--edge);border-radius:10px;padding:8px 12px;text-decoration:none}
+.live i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--fix);margin-right:6px}
+.live.off i{background:var(--qa)}
+.pipe{display:flex;gap:6px;margin:16px 0;overflow-x:auto;padding-bottom:4px}
+.st{flex:1 0 110px;border-radius:10px;padding:8px 10px;background:var(--glass);border-top:4px solid var(--c);font-size:13px}
+.st b{font-size:20px;font-weight:800;display:block;font-variant-numeric:tabular-nums}
+.floor{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:14px;border-radius:20px;background:var(--floor);background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:40px 40px;border:1px solid var(--edge)}
+.cab{position:relative;border:1.5px solid color-mix(in srgb,var(--c) 45%,var(--edge));border-radius:16px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 10%,var(--glass)),var(--glass));padding:12px;display:flex;flex-direction:column;gap:8px;min-height:260px;overflow:hidden}
+.cab.wide{grid-column:span 2}
+#cab-done{grid-column:1/-1;min-height:0}
+.cab::before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--c)}
+.cab.busy{box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 60%,transparent),0 0 40px -12px var(--c)}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ch h2{margin:0;font-size:16px;font-weight:800}
+.ch p{margin:2px 0 0;font-size:12px;color:var(--mut)}
+.pill{font-size:12px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.08);white-space:nowrap}
+.pill.on{background:color-mix(in srgb,var(--c) 30%,transparent);color:#fff}
+.desks{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:1;align-items:flex-end}
+.dk{position:relative;flex:1 1 140px;max-width:200px;display:flex;flex-direction:column;align-items:center}
+.bub{min-height:38px;width:100%;font-size:12px;line-height:1.3;background:#fff;color:#14182b;border-radius:10px;padding:5px 8px;position:relative;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bub::after{content:"";position:absolute;left:50%;bottom:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0;transform:translateX(-50%)}
+.bub.idle{background:rgba(255,255,255,.08);color:var(--mut)}
+.bub.idle::after{border-top-color:rgba(255,255,255,.08)}
+.dk svg{width:100%;height:auto;display:block}
+.tray{display:flex;flex-wrap:wrap;gap:4px;min-height:24px}
+.tk{font-size:11px;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.08);border-left:3px solid var(--c);cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.tk.bug{background:color-mix(in srgb,var(--qa) 25%,transparent)}
+.tk:hover{background:rgba(255,255,255,.16)}
+.shelf{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;flex:1}
+.trophy{display:flex;align-items:center;gap:6px;font-size:12px;background:color-mix(in srgb,var(--done) 18%,transparent);border-radius:8px;padding:4px 8px;cursor:pointer}
+.big{font-size:44px;font-weight:800;line-height:1;color:var(--c)}
+.feed{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.box{background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:14px}
+.box h3{margin:0 0 8px;font-size:15px;font-weight:800}
+.msgs{display:grid;gap:6px;max-height:300px;overflow:auto;font-size:13px}
+.msg{display:grid;grid-template-columns:42px 14px minmax(0,1fr);gap:6px;align-items:start}
+.msg time{color:var(--mut);font-variant-numeric:tabular-nums}
+.msg i{width:10px;height:10px;border-radius:50%;background:var(--c);margin-top:5px}
+.msg b{color:var(--c)}
+.fly{position:absolute;z-index:50;pointer-events:none;font-size:12px;font-weight:700;background:#fff;color:#14182b;border-radius:8px;padding:4px 9px;border-left:4px solid var(--c);box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform 1.3s cubic-bezier(.5,-.3,.3,1.3),opacity .3s;white-space:nowrap}
+.drawer{position:fixed;top:0;right:0;width:min(420px,100%);height:100%;background:#0f1630;border-left:1px solid var(--edge);padding:18px;overflow:auto;transform:translateX(100%);transition:transform .3s;z-index:60}
+.drawer.open{transform:none}
+.drawer button{background:none;border:1px solid var(--edge);color:var(--ink);border-radius:8px;padding:6px 10px;cursor:pointer;float:right}
+.drawer ul{padding-left:18px}
+.empty{color:var(--mut);font-size:13px}
+/* bot animation */
+.on .arm{animation:type .32s ease-in-out infinite alternate;transform-box:fill-box}
+.on .arm.r{animation-delay:.16s}
+@keyframes type{to{transform:translateY(-5px)}}
+.on .code{animation:scroll 1.6s linear infinite}
+@keyframes scroll{to{transform:translateY(-20px)}}
+.off .code{opacity:.2}
+.on .ant{animation:glow 1s ease-in-out infinite alternate}
+@keyframes glow{to{opacity:.3}}
+.eye{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.off .head{transform:rotate(-7deg);transform-box:fill-box;transform-origin:bottom center}
+.zz{opacity:0}
+.off .zz{animation:zz 2.4s ease-in infinite}
+.off .zz.b{animation-delay:1.2s}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(10px,-18px)}}
+.steam{opacity:0}
+.off .steam{animation:st 2s ease-out infinite}
+@keyframes st{0%{opacity:0;transform:translateY(0)}40%{opacity:.7}100%{opacity:0;transform:translateY(-10px)}}
+.lamp{opacity:0;transition:opacity .4s}
+.on .lamp{opacity:.35}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:1100px){.floor{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.floor{grid-template-columns:minmax(0,1fr)}.cab.wide{grid-column:auto}#cab-done{grid-column:auto}.feed{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="ttl">
+      <svg class="ring" viewBox="0 0 64 64" id="ring"></svg>
+      <div><h1 id="title">Bot office</h1><p class="sub" id="subline">Board ka wait…</p></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="links"><span class="live" id="live"><i></i><span>Connecting</span></span><a href="/board">Classic board</a></div>
+  </div>
+  <div class="pipe" id="pipe"></div>
+  <div class="floor" id="floor"></div>
+  <div class="feed">
+    <div class="box"><h3>Office chat (live)</h3><div class="msgs" id="feed"></div></div>
+    <div class="box"><h3>Bug wall</h3><div class="msgs" id="bugs"></div></div>
+  </div>
+</div>
+<aside class="drawer" id="drawer"></aside>
+<script>
+{
+const COLORS={dr:'var(--dr)',fe:'var(--fe)',be:'var(--be)',uat:'var(--uat)',qa:'var(--qa)',fix:'var(--fix)',mgr:'var(--mgr)',done:'var(--done)'};
+const HEX={dr:'#9aa4b8',fe:'#3d7bff',be:'#b47cff',uat:'#ffb400',qa:'#ff4d5e',fix:'#19c37d',mgr:'#ff8a3d'};
+const NAMES={dr:'Design reader',fe:'Frontend bot',be:'Backend bot',uat:'UAT bot',qa:'QA bot',fix:'Fix bot'};
+const STAGES=[['backlog','Backlog','dr'],['dev','In dev','fe'],['park','UAT parked','uat'],['uat','UAT review','uat'],['qa','QA','qa'],['fix','Fixing','fix'],['blocked','Needs human','mgr'],['closed','Closed','done']];
+const CABIN_OF={backlog:'dr',dev:'fe',park:'uat',uat:'uat',qa:'qa',fix:'fix',blocked:'mgr',closed:'done'};
+const CABINS=[
+  {id:'dr',title:'Design studio',sub:'Figma → section specs · inbox = backlog',desks:1,stages:['backlog']},
+  {id:'fe',title:'Frontend cabin',sub:'Developers sections banate hain',desks:3,stages:['dev'],wide:true},
+  {id:'be',title:'Backend desk',sub:'Store data: collections, menus, pages',desks:1,stages:[]},
+  {id:'uat',title:'UAT room',sub:'Figma + brief se match',desks:1,stages:['park','uat']},
+  {id:'qa',title:'QA lab',sub:'Bugs dhoondhta hai',desks:1,stages:['qa']},
+  {id:'fix',title:'Fix workshop',sub:'Bugs theek karta hai',desks:1,stages:['fix']},
+  {id:'mgr',title:"Manager's cabin",sub:'Orchestrator · Needs human',desks:1,stages:['blocked']},
+  {id:'done',title:'Done shelf',sub:'Closed sections',stages:['closed']},
+];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hm=t=>{const d=new Date(t);return isNaN(d)?'':d.toTimeString().slice(0,5)};
+let B=null,last='',prevStage={},sel=null,uid=0;
+
+function bot(color,on){
+  const id='c'+(uid++);
+  return `<svg viewBox="0 0 160 118" class="${on?'on':'off'}" aria-hidden="true">
+  <defs><clipPath id="${id}"><rect x="8" y="40" width="34" height="26" rx="2"/></clipPath></defs>
+  <ellipse class="lamp" cx="80" cy="70" rx="70" ry="44" fill="${color}"/>
+  <ellipse cx="80" cy="113" rx="66" ry="5" fill="#000" opacity=".3"/>
+  <rect x="52" y="42" width="56" height="52" rx="14" fill="#26314f"/>
+  <g><rect x="58" y="60" width="44" height="34" rx="12" fill="${color}"/>
+   <g class="head"><rect x="54" y="20" width="52" height="40" rx="15" fill="#e3e9ff"/>
+    <rect x="60" y="28" width="40" height="22" rx="9" fill="#18203d"/>
+    <circle class="eye" cx="71" cy="39" r="3.6" fill="${color}"/><circle class="eye" cx="89" cy="39" r="3.6" fill="${color}"/>
+    <line x1="80" y1="20" x2="80" y2="10" stroke="#e3e9ff" stroke-width="3"/><circle class="ant" cx="80" cy="8" r="4.5" fill="${color}"/></g>
+   <rect class="arm l" x="50" y="70" width="12" height="20" rx="6" fill="${color}"/>
+   <rect class="arm r" x="98" y="70" width="12" height="20" rx="6" fill="${color}"/></g>
+  <rect x="62" y="72" width="36" height="16" rx="3" fill="#2b3554"/><circle cx="80" cy="80" r="2.5" fill="${on?'#fff':'#55607f'}"/>
+  <rect x="6" y="38" width="38" height="30" rx="4" fill="#0a0f1f" stroke="#3a4772" stroke-width="2"/>
+  <g clip-path="url(#${id})"><g class="code">
+   ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${11+(i%3)*3}" y="${43+i*5}" width="${12+((i*7)%14)}" height="2.4" rx="1" fill="${i%2?color:'#7f8bb3'}"/>`).join('')}
+  </g></g>
+  <rect x="22" y="68" width="6" height="16" fill="#3a4772"/>
+  <rect x="4" y="86" width="152" height="10" rx="4" fill="#8a5a3c"/><rect x="12" y="96" width="8" height="16" fill="#6b442c"/><rect x="140" y="96" width="8" height="16" fill="#6b442c"/>
+  <rect x="124" y="74" width="14" height="12" rx="3" fill="#e3e9ff"/><path d="M138 77 q6 3 0 6" stroke="#e3e9ff" stroke-width="2" fill="none"/>
+  <path class="steam" d="M128 70 q-3 -4 0 -8 M134 70 q3 -4 0 -8" stroke="#c8d0ee" stroke-width="1.6" fill="none"/>
+  <text class="zz" x="108" y="24" font-size="12" font-weight="800" fill="#c8d0ee">z</text>
+  <text class="zz b" x="116" y="16" font-size="9" font-weight="800" fill="#c8d0ee">z</text>
+  </svg>`;
+}
+function ticket(c){const open=c.bugs.filter(b=>b.status!=='verified').length;return `<span class="tk${open?' bug':''}" data-id="${c.id}" style="--c:${COLORS[CABIN_OF[c.stage]]}" title="${esc(c.page+' · '+c.name)}">${esc(c.id)} ${esc(c.name)}${open?' · '+open+'🐞':''}</span>`}
+
+function desks(cab){
+  const cards=B.cards, bots=B.bots||{};
+  let list=[];
+  if(cab.id==='dr'||cab.id==='be'){const s=bots[cab.id]||{};const on=s.status==='working';list=[{on,text:on?(s.task||'Kaam chal raha'):(cab.id==='be'&&(B.backend||[]).length?`${(B.backend||[]).filter(t=>t.status==='done').length}/${B.backend.length} tasks done`:'Queue khali')}]}
+  else if(cab.id==='mgr'){const anyOn=Object.values(bots).some(s=>s.status==='working');const f=(B.feed||[])[0];list=[{on:anyOn,text:anyOn?'Team ko kaam baant raha hoon':(f?'Last: '+f.msg:'Sab shaant hai')}]}
+  else{const mine=cards.filter(c=>c.owner===cab.id);list=mine.map(c=>({on:true,text:c.page+' · '+c.name+(c.rework?' (rework '+c.rework+')':'')}));while(list.length<cab.desks)list.push({on:false,text:'Queue khali — chai break'})}
+  return list.map(d=>`<div class="dk"><div class="bub${d.on?'':' idle'}">${esc(d.text)}</div>${bot(HEX[cab.id],d.on)}</div>`).join('');
+}
+function cabin(cab){
+  const cards=B.cards;
+  const busy=cab.id==='dr'||cab.id==='be'?(B.bots[cab.id]||{}).status==='working':cab.id==='mgr'?Object.values(B.bots).some(s=>s.status==='working'):cards.some(c=>c.owner===cab.id);
+  const queue=cards.filter(c=>cab.stages.includes(c.stage)&&!c.owner);
+  if(cab.id==='done'){
+    return `<section class="cab" id="cab-done" style="--c:${COLORS.done}"><div class="ch"><div><h2>${cab.title}</h2><p>${cab.sub}</p></div><span class="big">${queue.length}</span></div>
+    <div class="shelf">${queue.map(c=>`<span class="trophy" data-id="${c.id}">🏆 ${esc(c.name)}</span>`).join('')||'<span class="empty">Abhi koi section close nahi hua.</span>'}</div></section>`;
+  }
+  const label=cab.id==='dr'?'Inbox':cab.id==='mgr'?'Aapke liye':cab.id==='be'?'':'Queue';
+  return `<section class="cab${cab.wide?' wide':''}${busy?' busy':''}" id="cab-${cab.id}" style="--c:${COLORS[cab.id]}">
+   <div class="ch"><div><h2>${cab.title}</h2><p>${cab.sub}</p></div><span class="pill${busy?' on':''}">${busy?'working':'idle'}</span></div>
+   <div class="desks">${desks(cab)}</div>
+   ${cab.stages.length?`<div class="tray"><span class="empty">${label} (${queue.length}):</span>${queue.slice(0,8).map(ticket).join('')}${queue.length>8?`<span class="empty">+${queue.length-8}</span>`:''}</div>`:''}
+  </section>`;
+}
+function render(){
+  if(!B){$('subline').textContent='Abhi koi run nahi. Claude Code me /build-site chalao.';$('floor').innerHTML='';return}
+  uid=0;
+  const cards=B.cards,closed=cards.filter(c=>c.stage==='closed').length,total=cards.length||1;
+  const mins=Math.max(0,Math.round((Date.parse(B.updatedAt)-Date.parse(B.startedAt))/60000));
+  $('title').textContent=B.project;
+  $('subline').textContent=`${cards.length} sections · ${mins} min se office chal raha hai`;
+  const C=2*Math.PI*26,f=closed/total;
+  $('ring').innerHTML=`<circle cx="32" cy="32" r="26" fill="none" stroke="#26345c" stroke-width="7"/><circle cx="32" cy="32" r="26" fill="none" stroke="#19c37d" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C*f} ${C}" transform="rotate(-90 32 32)"/><text x="32" y="37" text-anchor="middle" font-size="14" font-weight="800" fill="#eef2ff">${Math.round(f*100)}%</text>`;
+  const bugs=cards.flatMap(c=>c.bugs.map(b=>({...b,card:c})));
+  $('kpis').innerHTML=[[closed+'/'+cards.length,'Closed'],[bugs.length,'Bugs found'],[bugs.filter(b=>b.status!=='verified').length,'Bugs open'],[cards.reduce((a,c)=>a+c.rework,0),'UAT rejects'],[cards.filter(c=>c.stage==='blocked').length,'Needs human']].map(k=>`<div class="kpi"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('');
+  $('pipe').innerHTML=STAGES.map(([k,l,cab])=>`<div class="st" style="--c:${COLORS[cab]}"><b>${cards.filter(c=>c.stage===k).length}</b>${l}</div>`).join('');
+  const before=snapshot();
+  $('floor').innerHTML=CABINS.map(cabin).join('');
+  $('feed').innerHTML=(B.feed||[]).slice(0,40).map(e=>`<div class="msg" style="--c:${COLORS[e.bot]||'var(--mut)'}"><time>${hm(e.t)}</time><i></i><span><b>${NAMES[e.bot]||e.bot}</b> ${esc(e.msg)}</span></div>`).join('')||'<p class="empty">Abhi koi activity nahi.</p>';
+  const openBugs=bugs.filter(b=>b.status!=='verified');
+  $('bugs').innerHTML=openBugs.map(b=>`<div class="msg" style="--c:${b.status==='fixed'?'var(--uat)':'var(--qa)'}"><time>${esc(b.card.id)}</time><i></i><span><b>${esc(b.severity)}</b> ${esc(b.text)} <span class="empty">· ${b.status==='fixed'?'fix ho gaya, re-test baaki':'open'}</span></span></div>`).join('')||'<p class="empty">Wall saaf hai — koi open bug nahi. 🎉</p>';
+  flights(before);
+  if(sel)openDrawer(sel,false);
+}
+function snapshot(){const m={};for(const c of CABINS){const el=document.getElementById('cab-'+c.id);if(el){const r=el.getBoundingClientRect();m[c.id]={x:r.left+r.width/2+scrollX,y:r.top+r.height/2+scrollY}}}return m}
+function flights(before){
+  const after=snapshot(),now={};
+  for(const c of B.cards){now[c.id]=c.stage;const p=prevStage[c.id];
+    if(p&&p!==c.stage){const from=before[CABIN_OF[p]]||after[CABIN_OF[p]],to=after[CABIN_OF[c.stage]];if(!from||!to||CABIN_OF[p]===CABIN_OF[c.stage])continue;
+      const el=document.createElement('div');el.className='fly';el.style.setProperty('--c',COLORS[CABIN_OF[c.stage]]);el.textContent=c.id+' '+c.name;
+      el.style.left=from.x+'px';el.style.top=from.y+'px';document.body.appendChild(el);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transform=`translate(${to.x-from.x}px,${to.y-from.y}px)`}));
+      setTimeout(()=>{el.style.opacity='0'},1400);setTimeout(()=>el.remove(),1800);}}
+  prevStage=now;
+}
+function openDrawer(id,show=true){
+  const c=B&&B.cards.find(x=>x.id===id);if(!c)return;sel=id;
+  const st=(STAGES.find(s=>s[0]===c.stage)||[])[1];
+  $('drawer').innerHTML=`<button id="close">Close</button><h2 style="margin:0 0 4px">${esc(c.name)}</h2><p class="sub">${esc(c.id)} · ${esc(c.page)} · ${st}${c.owner?' · '+NAMES[c.owner]+' kaam kar raha':''}</p>${c.spec?`<p style="font-size:13px">Spec: <code>${esc(c.spec)}</code></p>`:''}<h3>Bugs</h3>${c.bugs.length?`<ul>${c.bugs.map(b=>`<li>${esc(b.text)} <span class="empty">(${b.status})</span></li>`).join('')}</ul>`:'<p class="empty">Koi bug nahi.</p>'}<h3>Bot log</h3><div class="msgs" style="max-height:none">${c.log.slice().reverse().map(e=>`<div class="msg" style="--c:${COLORS[e.bot]}"><time>${hm(e.t)}</time><i></i><span><b>${NAMES[e.bot]}</b> ${esc(e.msg)}</span></div>`).join('')}</div>`;
+  if(show)$('drawer').classList.add('open');
+  $('close').onclick=()=>{$('drawer').classList.remove('open');sel=null};
+}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-id]');if(t)openDrawer(t.dataset.id)});
+async function poll(){
+  try{const r=await fetch('/api/board',{cache:'no-store'});const t=await r.text();$('live').className='live';$('live').lastChild.textContent='Live';
+    if(t!==last){last=t;B=JSON.parse(t);if(B&&!Object.keys(prevStage).length)for(const c of B.cards)prevStage[c.id]=c.stage;render()}}
+  catch{$('live').className='live off';$('live').lastChild.textContent='Server band hai'}
+}
+poll();setInterval(poll,1500);
+}
+</script>
+</body>
+</html>

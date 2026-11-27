@@ -1,0 +1,18 @@
+{
+  "project": "Pranic test run",
+  "store": "mevaq1-17.myshopify.com",
+  "themeDir": "",
+  "themeId": "191216320643",
+  "storePassword": "Balwant",
+  "apiVersion": "2026-10",
+  "frontendParallel": 3,
+  "maxFixRounds": 3,
+  "source": {
+     "url": "https://lombard-au.myshopify.com/collections/all",
+    "password": "party",
+    "collections": ["balloons", "event-equipment-for-hire", "dress-up-costumes", "partyware-decorations", "catering", "birthday-party-supplies", "book-week-costumes", "baby-shower", "easter-party-supplies", "afl-party-supplies", "christmas-party-supplies", "featured-products", "christmas-best-sellers", "finger-food", "cakes-and-desserts"],
+    "perCollection": 1,
+    "limit": 15,
+    "mode": "auto"
+  }
+}

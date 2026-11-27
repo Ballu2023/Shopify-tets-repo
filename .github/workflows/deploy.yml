@@ -1,0 +1,100 @@
+name: Claude Bot - CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-claude-bot
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI - check & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Guard - secrets must not be committed
+        run: |
+          for f in .env node_modules; do
+            if git ls-files --error-unmatch "$f" >/dev/null 2>&1 || [ -n "$(git ls-files "$f/" | head -1)" ]; then
+              echo "::error file=$f::'$f' is committed to git. Remove it, add to .gitignore, rotate any keys."
+              exit 1
+            fi
+          done
+          echo "OK - .env and node_modules are not in git"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: node --check dashboard/server.js
+
+      - name: Smoke test (server boots + home page 200)
+        run: node --test tests/smoke.test.mjs
+        env:
+          PORT: 4999
+
+  deploy:
+    name: CD - deploy to Cloudways
+    needs: ci
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy over SSH (with auto-rollback)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_PATH: ${{ secrets.CW_APP_PATH }}
+          PM2_NAME: ${{ vars.PM2_NAME }}
+          APP_PORT: ${{ vars.APP_PORT }}
+        with:
+          host: ${{ secrets.CW_HOST }}
+          username: ${{ secrets.CW_USER }}
+          key: ${{ secrets.CW_SSH_KEY }}
+          port: 22
+          command_timeout: 10m
+          envs: APP_PATH,PM2_NAME,APP_PORT
+          script: |
+            set -e
+            cd "$APP_PATH"
+
+            PREV=$(git rev-parse HEAD)
+            echo ">> Live commit (before): $PREV"
+
+            git fetch origin main
+            git reset --hard origin/main
+            echo ">> Deploying commit:      $(git rev-parse HEAD)"
+
+            npm ci --omit=dev
+
+            PORT=$APP_PORT pm2 reload "$PM2_NAME" --update-env \
+              || PORT=$APP_PORT pm2 start dashboard/server.js --name "$PM2_NAME"
+
+            echo ">> Health check on 127.0.0.1:$APP_PORT ..."
+            for i in 1 2 3 4 5 6; do
+              if curl -fsS -o /dev/null "http://127.0.0.1:$APP_PORT/"; then
+                echo ">> Healthy. Deploy done."
+                pm2 save
+                exit 0
+              fi
+              sleep 3
+            done
+
+            echo "!! Health check FAILED - last logs:"
+            pm2 logs "$PM2_NAME" --lines 30 --nostream || true
+
+            echo "!! Rolling back to $PREV"
+            git reset --hard "$PREV"
+            npm ci --omit=dev
+            PORT=$APP_PORT pm2 reload "$PM2_NAME" --update-env
+            exit 1

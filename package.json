@@ -1,0 +1,17 @@
+{
+  "name": "claude-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot pipeline for Shopify Horizon delivery with Claude Code",
+  "scripts": {
+    "dashboard": "node dashboard/server.js",
+    "status": "node pipeline/board.js status",
+    "tokens": "node pipeline/tokens.js",
+    "report": "node pipeline/board.js report",
+    "shots:install": "npx playwright install chromium"
+  },
+  "engines": { "node": ">=18" },
+  "optionalDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

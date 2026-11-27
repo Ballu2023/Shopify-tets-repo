@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bot Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1116);--ink:light-dark(#0b0b10,#eef0f4);--mut:light-dark(#5b5f6b,#9aa1ad);--line:light-dark(#e4e6eb,#262b35);--panel:light-dark(#f6f7f9,#151922);--card:light-dark(#ffffff,#1b2030);--fe:#0a5cff;--uat:#ffb400;--qa:#e6261f;--fix:#00a05a;--be:light-dark(#0b0b10,#eef0f4);--dr:#8a8f99;--hum:#9b51e0}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 Figtree,system-ui,sans-serif}
+.wrap{max-width:1500px;margin:0 auto;padding:20px max(2vw,16px) 40px}
+h1{font-weight:800;font-size:clamp(26px,3.5vw,38px);line-height:1.05;letter-spacing:-.02em;margin:0}
+h2{font-weight:800;font-size:17px;margin:0 0 10px}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.sub{color:var(--mut);margin:6px 0 0}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--mut)}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--fix)}
+.live.off i{background:var(--qa)}
+.bots{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:16px}
+.bot{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);border-top:5px solid var(--c)}
+.bot .h{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.bot b{font-weight:700}
+.st{font-size:12px;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 20%,transparent);white-space:nowrap}
+.st.idle{background:var(--line);color:var(--mut)}
+.bot p{margin:4px 0 0;font-size:13px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media(max-width:1150px){.main{grid-template-columns:minmax(0,1fr)}}
+.board{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.cols{display:grid;grid-template-columns:repeat(8,minmax(160px,1fr));min-width:1330px}
+.col{border-right:1px solid var(--line);padding:10px 8px;min-height:480px}
+.col:last-child{border-right:0}
+.colh{display:flex;justify-content:space-between;font-weight:700;font-size:14px;padding:2px 4px 8px;border-bottom:4px solid var(--c);margin-bottom:8px}
+.colh span{color:var(--mut);font-weight:500}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:0 10px 10px 0;padding:8px 10px;margin-bottom:8px;cursor:pointer}
+.card.sel{box-shadow:0 0 0 2px var(--ink)}
+.card .pg{font-size:12px;color:var(--mut)}
+.card .nm{font-weight:700;font-size:14px;line-height:1.25}
+.meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:12px;padding:1px 7px;border-radius:99px;background:var(--line);white-space:nowrap}
+.tag.bug{background:color-mix(in srgb,var(--qa) 18%,transparent)}
+.tag.re{background:color-mix(in srgb,var(--uat) 28%,transparent)}
+@media(prefers-reduced-motion:no-preference){.card.work{animation:pulse 1.4s ease-in-out infinite}}
+@keyframes pulse{50%{border-left-color:transparent}}
+.rail{display:grid;gap:16px}
+.box{border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi b{display:block;font-weight:800;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:13px;color:var(--mut)}
+.pages{margin-top:12px;display:grid;gap:6px}
+.prow{display:grid;grid-template-columns:100px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:13px}
+.prow em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--fix)}
+.log{font-size:13px;max-height:320px;overflow:auto;display:grid;gap:4px}
+.log div{display:grid;grid-template-columns:44px minmax(0,1fr);gap:6px}
+.log time{color:var(--mut);font-variant-numeric:tabular-nums}
+.who{font-weight:700;color:var(--c)}
+.empty{color:var(--mut);font-size:14px}
+.bugs{margin:6px 0 10px;padding:0;list-style:none;display:grid;gap:6px;font-size:13px}
+.bugs li{border-left:3px solid var(--c);padding-left:8px}
+.bugs small{color:var(--mut);display:block}
+.shot{width:100%;border:1px solid var(--line);border-radius:8px;margin-top:6px}
+.be{margin:8px 0 0;padding:0;list-style:none;font-size:13px;display:grid;gap:3px}
+.be li.done{color:var(--mut);text-decoration:line-through}
+code{font-size:13px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1 id="title">Bot studio</h1><p class="sub" id="subline">Board ka wait…</p></div>
+    <span class="live" id="live"><i></i><span>Connecting</span></span>
+  </div>
+  <div class="bots" id="bots"></div>
+  <div class="main">
+    <div class="board"><div class="cols" id="cols"></div></div>
+    <div class="rail">
+      <div class="box"><h2>Run report</h2><div class="kpis" id="kpis"></div><div class="pages" id="pages"></div></div>
+      <div class="box"><h2 id="dtitle">Section detail</h2><div id="detail"><p class="empty">Card pe click karo: spec, bugs aur bot log yahan dikhega.</p></div></div>
+      <div class="box"><h2>Live activity</h2><div class="log" id="feed"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+{
+const BOTS={dr:['Design reader','var(--dr)'],fe:['Frontend bot','var(--fe)'],be:['Backend bot','var(--be)'],uat:['UAT bot','var(--uat)'],qa:['QA bot','var(--qa)'],fix:['Fix bot','var(--fix)']};
+const STAGES=[['backlog','Backlog','var(--dr)'],['dev','In dev','var(--fe)'],['park','UAT parked','var(--uat)'],['uat','UAT review','var(--uat)'],['qa','QA','var(--qa)'],['fix','Fixing','var(--fix)'],['blocked','Needs human','var(--hum)'],['closed','Closed','var(--fix)']];
+const BUGC={open:'var(--qa)',fixed:'var(--uat)',verified:'var(--fix)'};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hm=t=>{const d=new Date(t);return isNaN(d)?'':d.toTimeString().slice(0,5)};
+let B=null,sel=null,lastJson='';
+function logRow(e){const b=BOTS[e.bot]||['?','var(--mut)'];return `<div><time>${hm(e.t)}</time><span><span class="who" style="--c:${b[1]}">${b[0]}</span> ${esc(e.msg)}</span></div>`}
+function render(){
+  if(!B){$('subline').textContent='Abhi koi run nahi. Claude Code me /build-site chalao.';$('cols').innerHTML='';return}
+  const cards=B.cards,closed=cards.filter(c=>c.stage==='closed').length;
+  const mins=Math.max(0,Math.round((Date.parse(B.updatedAt)-Date.parse(B.startedAt))/60000));
+  $('title').textContent=B.project;
+  $('subline').textContent=`${(B.pages||[]).length} pages · ${cards.length} sections · theme ${B.themeDir||'?'} · ${mins} min se chal raha`;
+  const beDone=(B.backend||[]).filter(t=>t.status==='done').length;
+  $('bots').innerHTML=Object.entries(BOTS).map(([k,[n,c]])=>{const s=(B.bots||{})[k]||{status:'idle'};let task=s.task||'';if(k==='be'&&(B.backend||[]).length)task=`${beDone}/${B.backend.length} tasks · `+task;return `<div class="bot" style="--c:${c}"><div class="h"><b>${n}</b><span class="st${s.status==='idle'?' idle':''}">${esc(s.status)}</span></div><p title="${esc(task)}">${esc(task)||'Queue khali'}</p></div>`}).join('');
+  $('cols').innerHTML=STAGES.map(([k,l,c])=>{const cs=cards.filter(x=>x.stage===k);return `<div class="col"><div class="colh" style="--c:${c}">${l}<span>${cs.length}</span></div>${cs.map(card).join('')}</div>`}).join('');
+  const bugs=cards.flatMap(c=>c.bugs);
+  const k=[[closed+'/'+cards.length,'Sections closed'],[bugs.length,'Bugs found'],[bugs.filter(b=>b.status==='verified').length,'Bugs fixed + verified'],[bugs.filter(b=>b.status!=='verified').length,'Bugs open'],[cards.reduce((a,c)=>a+c.rework,0),'UAT rejects'],[cards.filter(c=>c.stage==='blocked').length,'Needs human']];
+  $('kpis').innerHTML=k.map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('');
+  const pages=[...new Set(cards.map(c=>c.page))];
+  $('pages').innerHTML=pages.map(p=>{const cs=cards.filter(c=>c.page===p),d=cs.filter(c=>c.stage==='closed').length;return `<div class="prow"><span>${esc(p)}</span><div class="bar"><i style="width:${d/cs.length*100}%"></i></div><em>${d}/${cs.length}</em></div>`}).join('')+((B.backend||[]).length?`<ul class="be">${B.backend.map(t=>`<li class="${t.status}">Backend: ${esc(t.name)}</li>`).join('')}</ul>`:'');
+  $('feed').innerHTML=(B.feed||[]).slice(0,80).map(logRow).join('')||'<p class="empty">Abhi koi activity nahi.</p>';
+  detail();
+}
+function card(c){
+  const st=STAGES.find(s=>s[0]===c.stage)||STAGES[0],open=c.bugs.filter(b=>b.status!=='verified').length;
+  const color=c.owner?BOTS[c.owner][1]:st[2];
+  return `<div class="card${c.owner?' work':''}${sel===c.id?' sel':''}" data-id="${c.id}" tabindex="0" role="button" style="--c:${color}"><div class="pg">${esc(c.id)} · ${esc(c.page)}</div><div class="nm">${esc(c.name)}</div><div class="meta">${c.owner?`<span class="tag">${BOTS[c.owner][0]}</span>`:''}${open?`<span class="tag bug">${open} bug</span>`:''}${c.rework?`<span class="tag re">UAT rework ${c.rework}</span>`:''}${c.stage==='closed'&&c.bugs.length?`<span class="tag">${c.bugs.length} fixed</span>`:''}</div></div>`;
+}
+function detail(){
+  const c=B&&B.cards.find(x=>x.id===sel);if(!c)return;
+  $('dtitle').textContent=c.page+' · '+c.name;
+  const st=(STAGES.find(s=>s[0]===c.stage)||[])[1];
+  const pg=(B.pages||[]).find(p=>p.name===c.page);
+  $('detail').innerHTML=`<p class="sub" style="margin:0 0 8px">Stage: <b>${st}</b>${c.owner?' · '+BOTS[c.owner][0]+' kaam kar raha':''}</p>
+  ${c.spec?`<p style="margin:0 0 6px;font-size:13px">Spec: <code>${esc(c.spec)}</code></p>`:''}
+  ${c.bugs.length?`<b>Bugs</b><ul class="bugs">${c.bugs.map(b=>`<li style="--c:${BUGC[b.status]}">${esc(b.text)}<small>${b.id} · ${b.severity} · ${b.status}${b.where?' · '+esc(b.where):''}${b.fix?' · fix: '+esc(b.fix):''}</small></li>`).join('')}</ul>`:''}
+  <b>Bot log</b><div class="log">${c.log.slice().reverse().map(logRow).join('')}</div>
+  ${pg&&pg.desktop?`<b style="display:block;margin-top:10px">Figma</b><img class="shot" src="/${esc(pg.desktop)}" alt="${esc(c.page)} design">`:''}`;
+}
+function pick(e){const el=e.target.closest('.card');if(!el)return;sel=el.dataset.id;render()}
+$('cols').addEventListener('click',pick);
+$('cols').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e)}});
+async function poll(){
+  try{const r=await fetch('/api/board',{cache:'no-store'});const t=await r.text();$('live').className='live';$('live').lastChild.textContent='Live';if(t!==lastJson){lastJson=t;B=JSON.parse(t);render()}}
+  catch{$('live').className='live off';$('live').lastChild.textContent='Server band hai'}
+}
+poll();setInterval(poll,1500);
+}
+</script>
+</body>
+</html>

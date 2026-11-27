@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node pipeline/board.js:*)",
+      "Bash(node pipeline/tokens.js:*)",
+      "Bash(node pipeline/push.js:*)",
+      "Bash(node pipeline/shots.js:*)",
+      "Bash(node pipeline/admin.js:*)",
+      "Bash(shopify theme check:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [
+      "Bash(shopify theme publish:*)",
+      "Bash(shopify theme push:*)",
+      "Bash(shopify theme delete:*)",
+      "Read(./.env)"
+    ]
+  }
+}
